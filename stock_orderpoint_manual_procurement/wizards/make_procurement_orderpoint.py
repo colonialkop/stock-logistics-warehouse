@@ -67,7 +67,11 @@ class MakeProcurementOrderpoint(models.TransientModel):
             if not item.orderpoint_id:
                 raise ValidationError(_("No reordering rule found!"))
             values = item.orderpoint_id._prepare_procurement_values(item.qty)
-            values['date_planned'] = item.date_planned
+            # Odoo expects date_planned to be datetime.
+            # See _get_stock_move_values method in file:
+            #     addons/stock/models/procurement.py#L91
+            values['date_planned'] = fields.Datetime.to_string(
+                fields.Datetime.from_string(item.date_planned))
             # Run procurement
             try:
                 self.env['procurement.group'].run(
